@@ -1,0 +1,196 @@
+<div class="playlist-page fade-in">
+
+  <!-- Toast -->
+  <div class="toast" *ngIf="toast">{{ toast }}</div>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-list-music" style="color:var(--accent-light)"></i> My Playlists</h1>
+      <p class="page-sub">Organize your favorite music</p>
+    </div>
+    <button class="btn btn-primary" (click)="showCreateForm = !showCreateForm">
+      <i class="fas fa-plus"></i> New Playlist
+    </button>
+  </div>
+
+  <!-- Create form -->
+  <div class="create-form card" *ngIf="showCreateForm">
+    <h3>Create New Playlist</h3>
+    <input type="text" class="form-input" placeholder="Playlist name *"
+           [(ngModel)]="newPlaylistName" (keyup.enter)="createPlaylist()" />
+    <input type="text" class="form-input" placeholder="Description (optional)"
+           [(ngModel)]="newPlaylistDesc" />
+    <div class="form-actions">
+      <button class="btn btn-primary" (click)="createPlaylist()" [disabled]="!newPlaylistName.trim()">
+        <i class="fas fa-check"></i> Create
+      </button>
+      <button class="btn btn-ghost" (click)="showCreateForm = false">Cancel</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="spinner"></div>
+
+  <ng-container *ngIf="!loading">
+
+    <div *ngIf="playlists.length === 0 && !selectedPlaylist" class="empty-state">
+      <i class="fas fa-music"></i>
+      <p>No playlists yet</p>
+      <small>Create your first playlist to get started</small>
+    </div>
+
+    <div class="playlist-layout" *ngIf="playlists.length > 0">
+
+      <!-- Left: playlist list -->
+      <div class="playlist-list">
+        <div *ngFor="let pl of playlists"
+             class="playlist-item card"
+             [class.selected]="selectedPlaylist?._id === pl._id"
+             (click)="selectPlaylist(pl)">
+          <div class="pl-cover">
+            <img *ngIf="pl.songs && pl.songs.length"
+                 [src]="pl.songs[0].coverImage || 'https://picsum.photos/seed/'+pl._id+'/80/80'" alt="cover" />
+            <div *ngIf="!pl.songs || !pl.songs.length" class="pl-cover-empty"><i class="fas fa-music"></i></div>
+          </div>
+          <div class="pl-info">
+            <p class="pl-name">{{ pl.name }}</p>
+            <p class="pl-meta">{{ (pl.songs && pl.songs.length) || 0 }} songs</p>
+          </div>
+          <button class="delete-btn" (click)="deletePlaylist(pl._id, $event)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: playlist detail -->
+      <div class="playlist-detail" *ngIf="selectedPlaylist">
+        <div class="detail-header">
+          <div class="detail-cover">
+            <img *ngIf="selectedPlaylist.songs && selectedPlaylist.songs.length"
+                 [src]="selectedPlaylist.songs[0].coverImage || 'https://picsum.photos/seed/'+selectedPlaylist._id+'/120/120'"
+                 alt="cover" />
+            <div *ngIf="!selectedPlaylist.songs || !selectedPlaylist.songs.length" class="pl-cover-empty large">
+              <i class="fas fa-music"></i>
+            </div>
+          </div>
+          <div class="detail-meta">
+            <span class="badge badge-accent">Playlist</span>
+            <h2>{{ selectedPlaylist.name }}</h2>
+            <p *ngIf="selectedPlaylist.description">{{ selectedPlaylist.description }}</p>
+            <p class="meta-stats">
+              {{ (selectedPlaylist.songs && selectedPlaylist.songs.length) || 0 }} songs
+              <span *ngIf="selectedPlaylist.songs && selectedPlaylist.songs.length"> · {{ totalDuration(selectedPlaylist.songs) }}</span>
+            </p>
+            <div class="detail-actions">
+              <button class="btn btn-primary" (click)="playAll()" [disabled]="!selectedPlaylist.songs || !selectedPlaylist.songs.length">
+                <i class="fas fa-play"></i> Play All
+              </button>
+              <button class="btn btn-outline" (click)="openAddSongModal()">
+                <i class="fas fa-plus"></i> Add Songs
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Songs in playlist -->
+        <div class="detail-songs">
+          <div *ngIf="!selectedPlaylist.songs?.length" class="empty-songs">
+            <div class="empty-icon"><i class="fas fa-plus-circle"></i></div>
+            <p>No songs in this playlist yet</p>
+            <small>Click <strong>Add Songs</strong> to find music</small>
+            <button class="btn btn-primary" style="margin-top:1rem" (click)="openAddSongModal()">
+              <i class="fas fa-search"></i> Browse Songs
+            </button>
+          </div>
+
+          <div *ngFor="let song of selectedPlaylist.songs; let i = index"
+               class="detail-song-row"
+               (click)="playSong(song)">
+            <span class="row-num">{{ i + 1 }}</span>
+            <img [src]="song.coverImage || 'https://picsum.photos/seed/'+song._id+'/48/48'"
+                 class="row-thumb" />
+            <div class="row-info">
+              <p class="row-title">{{ song.title }}</p>
+              <p class="row-artist">{{ song.artist }}</p>
+            </div>
+            <span class="badge badge-cyan">{{ song.genre }}</span>
+            <span class="row-dur">{{ songService.formatDuration(getRealDuration(song)) }}</span>
+            <button class="remove-btn" title="Remove from playlist"
+                    (click)="removeSong(selectedPlaylist!._id, song._id); $event.stopPropagation()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- No selection hint -->
+      <div class="playlist-detail no-selection" *ngIf="!selectedPlaylist">
+        <i class="fas fa-hand-pointer"></i>
+        <p>Select a playlist to view its songs</p>
+      </div>
+
+    </div>
+  </ng-container>
+</div>
+
+<!-- ═══ ADD SONG MODAL ════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showAddSongModal" (click)="showAddSongModal = false">
+  <div class="add-song-modal" (click)="$event.stopPropagation()">
+
+    <div class="asmodal-header">
+      <div>
+        <h3><i class="fas fa-music"></i> Add Songs to "{{ selectedPlaylist?.name }}"</h3>
+        <p>Search and add songs to your playlist</p>
+      </div>
+      <button class="modal-close-btn" (click)="showAddSongModal = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="asmodal-search">
+      <i class="fas fa-search"></i>
+      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="doSearch()"
+             placeholder="Search by title, artist or album..."
+             class="asmodal-search-input" autofocus />
+    </div>
+
+    <div class="asmodal-body">
+      <div *ngIf="searchLoading" class="spinner"></div>
+
+      <div *ngIf="!searchLoading" class="song-search-list">
+        <div *ngFor="let song of searchResults"
+             class="song-search-row"
+             [class.in-playlist]="isSongInPlaylist(song._id)">
+          <img [src]="song.coverImage || 'https://picsum.photos/seed/'+song._id+'/48/48'"
+               class="search-row-thumb" />
+          <div class="search-row-info">
+            <p class="search-row-title">{{ song.title }}</p>
+            <p class="search-row-artist">{{ song.artist }} · <span>{{ song.genre }}</span></p>
+          </div>
+          <span class="search-row-dur">{{ songService.formatDuration(song.duration) }}</span>
+          <button *ngIf="!isSongInPlaylist(song._id)"
+                  class="add-song-btn" (click)="addSongToPlaylist(song)">
+            <i class="fas fa-plus"></i> Add
+          </button>
+          <span *ngIf="isSongInPlaylist(song._id)" class="already-added">
+            <i class="fas fa-check"></i> Added
+          </span>
+        </div>
+
+        <div *ngIf="searchResults.length === 0" class="empty-state" style="padding:2rem">
+          <i class="fas fa-search"></i>
+          <p>No songs found</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="asmodal-footer">
+      <span class="added-count">
+        {{ selectedPlaylist?.songs?.length || 0 }} song(s) in playlist
+      </span>
+      <button class="btn btn-primary" (click)="showAddSongModal = false">
+        <i class="fas fa-check"></i> Done
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,80 @@
+<div class="search-page fade-in">
+
+  <!-- Header -->
+  <div class="search-header">
+    <h1 class="page-title">
+      <i class="fas fa-compass" style="color:var(--accent-light)"></i>
+      Discover Music
+    </h1>
+    <p class="page-sub">Find your favorite songs, artists, and genres</p>
+  </div>
+
+  <!-- Search box -->
+  <div class="search-box-wrap">
+    <div class="big-search">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onQueryChange()"
+        placeholder="Search by song title, artist or album..."
+        class="big-search-input"
+        autofocus
+      />
+      <button *ngIf="searchQuery" class="clear-btn" (click)="clearFilters()">
+        <i class="fas fa-times-circle"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Genre filters -->
+  <div class="genre-filters">
+    <span class="filter-label">Filter by Genre:</span>
+    <div class="genre-pills">
+      <button
+        *ngFor="let genre of genres"
+        class="genre-pill"
+        [class.active]="selectedGenre === genre"
+        (click)="selectGenre(genre)"
+      >{{ genre }}</button>
+    </div>
+    <button *ngIf="selectedGenre || searchQuery" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+      <i class="fas fa-times"></i> Clear
+    </button>
+  </div>
+
+  <!-- Results summary -->
+  <div class="results-summary" *ngIf="!loading">
+    <span *ngIf="searchQuery || selectedGenre">
+      Found <strong>{{ totalResults }}</strong> results
+      <span *ngIf="searchQuery"> for "<em>{{ searchQuery }}</em>"</span>
+      <span *ngIf="selectedGenre"> in <em>{{ selectedGenre }}</em></span>
+    </span>
+    <span *ngIf="!searchQuery && !selectedGenre">
+      Showing all <strong>{{ totalResults }}</strong> songs
+    </span>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="spinner"></div>
+
+  <!-- Results grid -->
+  <ng-container *ngIf="!loading">
+    <div *ngIf="songs.length; else noResults" class="songs-grid">
+      <app-song-card
+        *ngFor="let song of songs"
+        [song]="song"
+        [queue]="songs">
+      </app-song-card>
+    </div>
+
+    <ng-template #noResults>
+      <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <p>No songs found</p>
+        <small>Try a different search term or genre</small>
+      </div>
+    </ng-template>
+  </ng-container>
+
+</div>

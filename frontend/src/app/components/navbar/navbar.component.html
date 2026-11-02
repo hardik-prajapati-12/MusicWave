@@ -1,0 +1,50 @@
+<nav class="navbar">
+  <!-- Logo -->
+  <a routerLink="/" class="nav-logo">
+    <span class="logo-icon"><i class="fas fa-wave-square"></i></span>
+    <span class="logo-text">Music<span class="logo-accent">Wave</span></span>
+  </a>
+
+  <!-- Search bar -->
+  <div class="search-bar">
+    <i class="fas fa-search search-icon"></i>
+    <input
+      type="text"
+      placeholder="Search songs, artists, albums..."
+      [(ngModel)]="searchQuery"
+      (keyup.enter)="onSearch()"
+      class="search-input"
+    />
+    <button *ngIf="searchQuery" class="search-clear" (click)="searchQuery = ''">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Nav actions -->
+  <div class="nav-actions">
+    <ng-container *ngIf="!auth.isLoggedIn(); else loggedIn">
+      <a routerLink="/login" class="btn btn-ghost">Sign In</a>
+      <a routerLink="/register" class="btn btn-primary">Get Started</a>
+    </ng-container>
+
+    <ng-template #loggedIn>
+      <a *ngIf="auth.currentUser?.role === 'admin'" routerLink="/admin" class="admin-link">
+        <i class="fas fa-crown"></i> Admin
+      </a>
+      <div class="user-menu">
+        <div class="user-avatar" [class.is-admin]="auth.currentUser?.role === 'admin'">
+          {{ auth.currentUser?.username?.charAt(0)?.toUpperCase() }}
+        </div>
+        <div class="user-info">
+          <span class="username">{{ auth.currentUser?.username }}</span>
+          <span class="user-role" [class.admin]="auth.currentUser?.role === 'admin'">
+            {{ auth.currentUser?.role }}
+          </span>
+        </div>
+        <button class="btn btn-ghost logout-btn" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</nav>

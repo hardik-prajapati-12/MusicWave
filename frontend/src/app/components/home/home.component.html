@@ -1,0 +1,98 @@
+<div class="home fade-in">
+
+  <!-- Hero Banner -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-tag"><i class="fas fa-fire"></i> Trending Now</span>
+      <h1 class="hero-title">Discover Your<br><span class="gradient-text">Next Favorite</span><br>Song</h1>
+      <p class="hero-sub">Stream millions of songs, create playlists, and explore new music every day.</p>
+      <div class="hero-actions">
+        <a routerLink="/search" class="btn btn-primary">
+          <i class="fas fa-search"></i> Explore Music
+        </a>
+        <a routerLink="/register" class="btn btn-outline">
+          <i class="fas fa-user-plus"></i> Join Free
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item"><strong>{{ totalSongs }}</strong><span>Songs</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-item"><strong>Free</strong><span>Forever</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="vinyl-disc">
+        <div class="vinyl-inner"></div>
+        <div class="vinyl-label">
+          <i class="fas fa-music"></i>
+        </div>
+      </div>
+      <div class="soundwave">
+        <span *ngFor="let h of [40,65,30,80,50,90,35,70,55,85,45,75,30,60,80]"
+              class="wave-bar" [style.height.px]="h"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="spinner"></div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Trending Tracks -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-chart-line" style="color:var(--accent-light);margin-right:10px"></i>Trending Tracks</h2>
+        <a routerLink="/search" class="btn btn-ghost btn-sm">See All →</a>
+      </div>
+      <div class="trending-list">
+        <div class="trending-item" *ngFor="let song of trendingSongs; let i = index"
+             (click)="playSong(song)">
+          <span class="track-rank" [class.top3]="i < 3">{{ i + 1 }}</span>
+          <img [src]="song.coverImage || 'https://picsum.photos/seed/'+song._id+'/60/60'"
+               [alt]="song.title" class="track-thumb" />
+          <div class="track-info">
+            <p class="track-name">{{ song.title }}</p>
+            <p class="track-artist">{{ song.artist }}</p>
+          </div>
+          <span class="badge badge-accent">{{ song.genre }}</span>
+          <span class="track-plays"><i class="fas fa-play"></i> {{ formatPlays(song.plays) }}</span>
+          <span class="track-dur">{{ songService.formatDuration(song.duration) }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Songs -->
+    <section class="section" *ngIf="featuredSongs.length">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-star" style="color:var(--yellow);margin-right:10px"></i>Featured</h2>
+      </div>
+      <div class="songs-grid">
+        <app-song-card
+          *ngFor="let song of featuredSongs"
+          [song]="song"
+          [queue]="featuredSongs">
+        </app-song-card>
+      </div>
+    </section>
+
+    <!-- All Songs -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-music" style="color:var(--cyan);margin-right:10px"></i>All Songs</h2>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:12px;color:var(--text-muted)">{{ totalSongs }} songs · Newest first</span>
+          <a routerLink="/search" class="btn btn-ghost btn-sm">Browse All →</a>
+        </div>
+      </div>
+      <div class="songs-grid">
+        <app-song-card
+          *ngFor="let song of recentSongs"
+          [song]="song"
+          [queue]="allSongsQueue">
+        </app-song-card>
+      </div>
+    </section>
+
+  </ng-container>
+</div>

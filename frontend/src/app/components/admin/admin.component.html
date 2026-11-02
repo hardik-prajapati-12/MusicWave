@@ -1,0 +1,334 @@
+<div class="admin-page fade-in">
+
+  <!-- Toast -->
+  <div class="admin-toast" *ngIf="toast" [class.error]="toastType === 'error'">
+    <i class="fas" [ngClass]="toastType === 'success' ? 'fa-check-circle' : 'fa-times-circle'"></i>
+    {{ toast }}
+  </div>
+
+  <!-- Header -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <span class="admin-crown"><i class="fas fa-crown"></i></span>
+        Admin Panel
+      </h1>
+      <p class="admin-sub">MusicWave Control Center</p>
+    </div>
+  </div>
+
+  <!-- Tabs: Dashboard | Users | Songs (Artists removed) -->
+  <div class="admin-tabs">
+    <button class="admin-tab" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">
+      <i class="fas fa-chart-pie"></i> Dashboard
+    </button>
+    <button class="admin-tab" [class.active]="activeTab === 'users'" (click)="setTab('users')">
+      <i class="fas fa-users"></i> Users
+    </button>
+    <button class="admin-tab" [class.active]="activeTab === 'songs'" (click)="setTab('songs')">
+      <i class="fas fa-music"></i> Songs
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="spinner"></div>
+
+  <!-- ═══ DASHBOARD ═══════════════════════════════════════════ -->
+  <div *ngIf="!loading && activeTab === 'dashboard' && stats">
+
+    <div class="stat-grid">
+      <div class="stat-card purple">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info"><p class="stat-val">{{ formatNum(stats.totalUsers) }}</p><p class="stat-lbl">Total Users</p></div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon"><i class="fas fa-music"></i></div>
+        <div class="stat-info"><p class="stat-val">{{ formatNum(stats.totalSongs) }}</p><p class="stat-lbl">Total Songs</p></div>
+      </div>
+      <div class="stat-card pink">
+        <div class="stat-icon"><i class="fas fa-heart"></i></div>
+        <div class="stat-info"><p class="stat-val">{{ formatNum(stats.totalLikes) }}</p><p class="stat-lbl">Total Likes</p></div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon"><i class="fas fa-play-circle"></i></div>
+        <div class="stat-info"><p class="stat-val">{{ formatNum(stats.totalPlays) }}</p><p class="stat-lbl">Total Plays</p></div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-icon"><i class="fas fa-list"></i></div>
+        <div class="stat-info"><p class="stat-val">{{ formatNum(stats.totalPlaylists) }}</p><p class="stat-lbl">Playlists</p></div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-panel">
+        <div class="panel-header">
+          <h3><i class="fas fa-user-clock"></i> Recent Users</h3>
+          <button class="btn btn-ghost btn-sm" (click)="setTab('users')">View All</button>
+        </div>
+        <div class="panel-list">
+          <div class="panel-row" *ngFor="let u of stats.recentUsers">
+            <div class="user-avatar-sm">{{ u.username.charAt(0).toUpperCase() }}</div>
+            <div class="row-info">
+              <p class="row-name">{{ u.username }}</p>
+              <p class="row-sub">{{ u.email }}</p>
+            </div>
+            <span class="role-badge" [class.admin]="u.role === 'admin'">{{ u.role }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-panel">
+        <div class="panel-header">
+          <h3><i class="fas fa-fire"></i> Top Songs</h3>
+          <button class="btn btn-ghost btn-sm" (click)="setTab('songs')">View All</button>
+        </div>
+        <div class="panel-list">
+          <div class="panel-row" *ngFor="let s of stats.topSongs; let i = index">
+            <span class="track-rank" [class.gold]="i===0" [class.silver]="i===1" [class.bronze]="i===2">{{ i+1 }}</span>
+            <img [src]="s.coverImage || 'https://picsum.photos/seed/'+s._id+'/40/40'" class="row-thumb" />
+            <div class="row-info">
+              <p class="row-name">{{ s.title }}</p>
+              <p class="row-sub">{{ s.artist }}</p>
+            </div>
+            <span class="play-count"><i class="fas fa-play"></i> {{ formatNum(s.plays) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <p class="qa-title">Quick Actions</p>
+      <div class="qa-grid">
+        <button class="qa-btn" (click)="setTab('songs'); openAddSong()">
+          <i class="fas fa-plus-circle"></i><span>Add Song</span>
+        </button>
+        <button class="qa-btn" (click)="setTab('users')">
+          <i class="fas fa-user-shield"></i><span>Manage Users</span>
+        </button>
+        <button class="qa-btn" (click)="setTab('songs')">
+          <i class="fas fa-star"></i><span>Feature Songs</span>
+        </button>
+        <button class="qa-btn" (click)="setTab('songs')">
+          <i class="fas fa-chart-bar"></i><span>Song Stats</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ USERS ════════════════════════════════════════════════ -->
+  <div *ngIf="!loading && activeTab === 'users'">
+    <div class="tab-toolbar">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="userSearch" (ngModelChange)="loadUsers()"
+               placeholder="Search users..." class="toolbar-input" />
+      </div>
+      <select [(ngModel)]="userRoleFilter" (ngModelChange)="loadUsers()" class="toolbar-select">
+        <option value="">All Roles</option>
+        <option value="user">Users</option>
+        <option value="admin">Admins</option>
+      </select>
+      <span class="result-count">{{ users.length }} users</span>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users; trackBy: trackById">
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar-sm">{{ user.username.charAt(0).toUpperCase() }}</div>
+                <span class="user-name">{{ user.username }}</span>
+              </div>
+            </td>
+            <td class="muted">{{ user.email }}</td>
+            <td>
+              <select class="role-select" [ngModel]="user.role" (ngModelChange)="changeRole(user, $event)">
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </td>
+            <td>
+              <span class="status-pill" [class.active]="user.isActive !== false" [class.inactive]="user.isActive === false">
+                {{ user.isActive !== false ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="muted">{{ user.createdAt | date:'MMM d, y' }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="icon-btn" [class.warn]="user.isActive !== false" (click)="toggleActive(user)"
+                        [title]="user.isActive !== false ? 'Deactivate' : 'Activate'">
+                  <i class="fas" [ngClass]="user.isActive !== false ? 'fa-user-slash' : 'fa-user-check'"></i>
+                </button>
+                <button class="icon-btn danger" (click)="deleteUser(user)" title="Delete User">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="users.length === 0">
+            <td colspan="6" class="empty-row">No users found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SONGS ═════════════════════════════════════════════════ -->
+  <div *ngIf="!loading && activeTab === 'songs'">
+    <div class="tab-toolbar">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="songSearch" (ngModelChange)="loadSongs()"
+               placeholder="Search songs or artists..." class="toolbar-input" />
+      </div>
+      <button class="btn btn-primary" (click)="openAddSong()">
+        <i class="fas fa-plus"></i> Add Song
+      </button>
+      <span class="result-count">{{ songs.length }} songs</span>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Song</th><th>Artist</th><th>Genre</th><th>Plays</th><th>Likes</th><th>Featured</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let song of songs; trackBy: trackById">
+            <td>
+              <div class="song-cell">
+                <img [src]="song.coverImage || 'https://picsum.photos/seed/'+song._id+'/40/40'" class="song-thumb" />
+                <span class="song-name">{{ song.title }}</span>
+              </div>
+            </td>
+            <td class="muted">{{ song.artist }}</td>
+            <td><span class="genre-chip">{{ song.genre }}</span></td>
+            <td class="muted">{{ formatNum(song.plays) }}</td>
+            <td class="muted">{{ formatNum(song.likes) }}</td>
+            <td>
+              <button class="feature-btn" [class.featured]="song.featured" (click)="toggleFeatured(song)"
+                      [title]="song.featured ? 'Unfeature' : 'Feature'">
+                <i class="fas fa-star"></i>
+              </button>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="icon-btn" (click)="openEditSong(song)" title="Edit"><i class="fas fa-edit"></i></button>
+                <button class="icon-btn warn" (click)="resetLikes(song)" title="Reset Likes"><i class="fas fa-heart-broken"></i></button>
+                <button class="icon-btn danger" (click)="deleteSong(song)" title="Delete"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="songs.length === 0">
+            <td colspan="7" class="empty-row">No songs found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ SONG MODAL ═══════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showSongModal" (click)="showSongModal = false">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingSong ? 'Edit Song' : 'Add New Song' }}</h3>
+      <button class="modal-close" (click)="showSongModal = false"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-grid">
+
+        <!-- Title -->
+        <div class="form-group">
+          <label>Title <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="songForm.title" class="form-input" placeholder="Song title" />
+        </div>
+
+        <!-- Artist -->
+        <div class="form-group">
+          <label>Artist <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="songForm.artist" class="form-input" placeholder="Artist name" />
+        </div>
+
+        <!-- Genre -->
+        <div class="form-group full-width">
+          <label>Genre</label>
+          <select [(ngModel)]="songForm.genre" class="form-input">
+            <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
+          </select>
+        </div>
+
+        <!-- Audio File Upload -->
+        <div class="form-group full-width">
+          <label>Audio File <span class="req">*</span></label>
+          <div class="file-upload-wrap" [class.has-file]="audioFileName">
+            <label class="file-upload-label" for="audioInput">
+              <i class="fas" [ngClass]="audioFileName ? 'fa-check-circle' : 'fa-cloud-upload-alt'"></i>
+              <span>{{ audioFileName || 'Choose audio file (MP3, WAV, OGG — max 50MB)' }}</span>
+              <span class="browse-btn">Browse</span>
+            </label>
+            <input type="file" id="audioInput" accept="audio/*"
+                   (change)="onAudioFileSelected($event)" style="display:none" />
+          </div>
+          <p class="upload-hint">
+            <i class="fas fa-info-circle"></i>
+            File is saved to the server — MongoDB stores only the file path.
+          </p>
+          <audio *ngIf="audioPreviewUrl" [src]="audioPreviewUrl" controls class="audio-preview"></audio>
+        </div>
+
+        <!-- Cover Image Upload -->
+        <div class="form-group full-width">
+          <label>Cover Image</label>
+          <div class="file-upload-wrap" [class.has-file]="imageFileName">
+            <label class="file-upload-label" for="imageInput">
+              <i class="fas" [ngClass]="imageFileName ? 'fa-check-circle' : 'fa-image'"></i>
+              <span>{{ imageFileName || 'Choose cover image (JPG, PNG, WebP — max 5MB)' }}</span>
+              <span class="browse-btn">Browse</span>
+            </label>
+            <input type="file" id="imageInput" accept="image/*"
+                   (change)="onImageFileSelected($event)" style="display:none" />
+          </div>
+          <div *ngIf="imagePreviewUrl" class="image-preview">
+            <img [src]="imagePreviewUrl" alt="Cover preview" />
+          </div>
+        </div>
+
+        <!-- Release Year -->
+        <div class="form-group full-width">
+          <label>Release Year</label>
+          <input type="number" [(ngModel)]="songForm.releaseYear" class="form-input" placeholder="2024" />
+        </div>
+
+        <!-- Featured -->
+        <div class="form-group full-width">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="songForm.featured" />
+            <span>Mark as Featured Song</span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" (click)="showSongModal = false" [disabled]="uploading">Cancel</button>
+      <button class="btn btn-primary" (click)="saveSong()" [disabled]="uploading">
+        <span *ngIf="!uploading">
+          <i class="fas fa-save"></i> {{ editingSong ? 'Update Song' : 'Add Song' }}
+        </span>
+        <span *ngIf="uploading">
+          <i class="fas fa-spinner fa-spin"></i> Uploading files...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

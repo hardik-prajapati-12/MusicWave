@@ -1,0 +1,74 @@
+<div class="player" [class.active]="currentSong">
+
+  <!-- Playback error toast -->
+  <div class="player-error" *ngIf="errorMsg">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMsg }}
+  </div>
+
+  <!-- Song info -->
+  <div class="player-song">
+    <div class="player-cover" [class.playing]="isPlaying">
+      <img *ngIf="currentSong?.coverImage" [src]="currentSong?.coverImage" [alt]="currentSong?.title" />
+      <div *ngIf="!currentSong?.coverImage" class="cover-placeholder">
+        <i class="fas fa-music"></i>
+      </div>
+      <div class="playing-ring" *ngIf="isPlaying"></div>
+    </div>
+    <div class="song-info" *ngIf="currentSong; else noSong">
+      <p class="song-title">{{ currentSong.title }}</p>
+      <p class="song-artist">{{ currentSong.artist }}</p>
+    </div>
+    <ng-template #noSong>
+      <div class="song-info">
+        <p class="song-title" style="color: var(--text-muted)">No song playing</p>
+        <p class="song-artist">Pick a song to get started</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Controls -->
+  <div class="player-controls">
+    <div class="control-buttons">
+      <button class="ctrl-btn" (click)="playerService.playPrev()" [disabled]="!currentSong">
+        <i class="fas fa-step-backward"></i>
+      </button>
+      <button class="ctrl-btn play-btn" (click)="playerService.togglePlay()" [disabled]="!currentSong">
+        <i class="fas" [ngClass]="isPlaying ? 'fa-pause' : 'fa-play'"></i>
+      </button>
+      <button class="ctrl-btn" (click)="playerService.playNext()" [disabled]="!currentSong">
+        <i class="fas fa-step-forward"></i>
+      </button>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <span class="time">{{ currentTimeStr }}</span>
+      <input
+        type="range"
+        class="progress-bar"
+        min="0" max="100"
+        [value]="progress"
+        (input)="onSeek($event)"
+        [disabled]="!currentSong"
+      />
+      <span class="time">{{ durationStr }}</span>
+    </div>
+  </div>
+
+  <!-- Volume -->
+  <div class="player-volume">
+    <button class="ctrl-btn volume-btn" (click)="toggleMute()">
+      <i class="fas" [ngClass]="{
+        'fa-volume-up':   volume > 0.5 && !isMuted,
+        'fa-volume-down': volume <= 0.5 && volume > 0 && !isMuted,
+        'fa-volume-mute': isMuted || volume === 0
+      }"></i>
+    </button>
+    <input
+      type="range"
+      class="volume-bar"
+      min="0" max="1" step="0.01"
+      [value]="isMuted ? 0 : volume"
+      (input)="onVolume($event)"
+    />
+  </div>
+</div>
